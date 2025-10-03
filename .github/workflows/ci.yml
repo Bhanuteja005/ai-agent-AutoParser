@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Code Quality
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black ruff
+    
+    - name: Run Black
+      run: black --check .
+      continue-on-error: true
+    
+    - name: Run Ruff
+      run: ruff check .
+      continue-on-error: true
+
+  test:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      run: pytest tests/test_parsers.py -v --tb=short
+      continue-on-error: true
+      # Tests may fail if parsers haven't been generated yet
+
+  agent-smoke-test:
+    runs-on: ubuntu-latest
+    name: Agent Smoke Test
+    # Only run if API key is available
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run agent (if API key available)
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        if [ -n "$OPENAI_API_KEY" ]; then
+          python agent.py --target icici --attempts 1
+          pytest tests/test_parsers.py::test_icici_parser -v
+        else
+          echo "Skipping: OPENAI_API_KEY not configured"
+        fi
+      continue-on-error: true

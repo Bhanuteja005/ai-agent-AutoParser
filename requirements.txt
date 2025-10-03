@@ -1,0 +1,20 @@
+# Core dependencies
+pandas>=2.0.0
+pdfplumber>=0.10.0
+pdfminer.six>=20221105
+PyPDF2>=3.0.0
+
+# LLM Integration
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-xdist>=3.3.0
+
+# Code Quality (optional)
+black>=23.0.0
+ruff>=0.1.0
+
+# Type checking
+mypy>=1.5.0

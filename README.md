@@ -1,8 +1,8 @@
-﻿# Agent-as-Coder — Bank Statement PDF Parser Generator
+﻿# Agent-as-Coder
 
 **Automated bank-statement PDF parser generator using AI Agent**
 
-This project implements an AI agent that generates Python parsers for bank statement PDFs using LLM-driven code generation. The agent analyzes sample PDFs and CSVs, then automatically generates, tests, and fixes parser code through an iterative loop.
+An AI agent that generates Python parsers for bank statement PDFs using LLM-driven code generation. The agent analyzes sample PDFs and CSVs, then automatically generates, tests, and fixes parser code through an iterative loop.
 
 ---
 

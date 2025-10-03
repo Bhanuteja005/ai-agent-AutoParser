@@ -56,7 +56,7 @@ class ParserAgent:
         self,
         target_bank: str,
         max_attempts: int = 3,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-2.0-flash",
         verbose: bool = True
     ):
         """
@@ -65,7 +65,7 @@ class ParserAgent:
         Args:
             target_bank: Name of the target bank (e.g., 'icici')
             max_attempts: Maximum number of generation attempts
-            model: LLM model to use (default: gemini-2.5-flash)
+            model: LLM model to use (default: gemini-2.0-flash)
             verbose: Print detailed logs
         """
         self.target_bank = target_bank
@@ -527,8 +527,8 @@ Environment:
     parser.add_argument(
         "--model",
         type=str,
-        default="gemini-2.5-flash",
-        help="LLM model to use (default: gemini-2.5-flash)"
+        default="gemini-2.0-flash",
+        help="LLM model to use (default: gemini-2.0-flash)"
     )
     
     parser.add_argument(

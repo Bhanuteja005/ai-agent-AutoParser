@@ -15,12 +15,12 @@ import google.generativeai as genai
 class LLMGenerator:
     """Wrapper for LLM API calls to generate plans and parser code."""
     
-    def __init__(self, model: str = "gemini-2.5-flash", api_key: Optional[str] = None):
+    def __init__(self, model: str = "gemini-2.0-flash", api_key: Optional[str] = None):
         """
         Initialize the LLM generator.
         
         Args:
-            model: Model name to use (default: gemini-2.5-flash for speed and cost efficiency)
+            model: Model name to use (default: gemini-2.0-flash for speed and reliability)
             api_key: Google Gemini API key (if None, reads from GEMINI_API_KEY env var)
         """
         self.model = model
@@ -104,8 +104,9 @@ class LLMGenerator:
             # Check finish reason
             finish_reason = candidate.finish_reason
             
-            # If blocked by safety, try to get partial content or provide helpful error
-            if finish_reason == 2:  # SAFETY
+            # Finish reason codes: 0=UNSPECIFIED, 1=STOP (success), 2=MAX_TOKENS, 3=SAFETY, 4=RECITATION, 5=OTHER
+            # If blocked by safety (3), try to get partial content
+            if finish_reason == 3:  # SAFETY
                 # Check if there's any partial content
                 if hasattr(candidate.content, 'parts') and candidate.content.parts:
                     try:
@@ -128,11 +129,14 @@ class LLMGenerator:
                 else:
                     raise Exception("Content filtered by safety system. Try rephrasing your prompt or using a different model.")
             
-            # Check other finish reasons
-            if finish_reason not in [1, 0]:  # 1=STOP, 0=UNSPECIFIED (success)
+            # Check if we got valid content (finish_reason 0, 1, or 2 are acceptable)
+            if finish_reason not in [0, 1, 2]:  # 0=UNSPECIFIED, 1=STOP, 2=MAX_TOKENS (all OK)
                 finish_reasons = {
-                    3: "RECITATION (copyright)",
-                    4: "OTHER"
+                    4: "RECITATION (copyright)",
+                    5: "OTHER",
+                    6: "BLOCKLIST",
+                    7: "PROHIBITED_CONTENT",
+                    8: "SPII"
                 }
                 reason = finish_reasons.get(finish_reason, f"UNKNOWN ({finish_reason})")
                 raise Exception(f"Generation stopped: {reason}")
@@ -164,10 +168,20 @@ class LLMGenerator:
         Returns:
             Python code as a string
         """
-        code = self.generate_text(prompt, temperature=0.2, max_tokens=4000)
+        # Add explicit instruction to output raw code
+        enhanced_prompt = prompt + "\n\nIMPORTANT: Output raw Python code ONLY. Do NOT wrap in markdown code blocks (```). Start directly with 'import' statements."
+        
+        code = self.generate_text(enhanced_prompt, temperature=0.2, max_tokens=4000)
         
         # Clean up code if it's wrapped in markdown
         code = self._extract_code_from_markdown(code)
+        
+        # Final sanity check: remove any remaining markdown artifacts
+        if code.startswith('```'):
+            lines = code.split('\n')
+            # Remove lines containing only ```
+            lines = [l for l in lines if l.strip() not in ['```', '```python', '```py']]
+            code = '\n'.join(lines).strip()
         
         return code
     
@@ -181,24 +195,40 @@ class LLMGenerator:
         Returns:
             Clean Python code
         """
-        # Look for ```python ... ``` or ``` ... ``` blocks
-        pattern = r'```(?:python)?\s*\n(.*?)\n```'
+        # Remove leading/trailing whitespace
+        text = text.strip()
+        
+        # Look for ```python ... ``` or ``` ... ``` blocks with flexible newlines
+        pattern = r'```(?:python)?\s*[\r\n]+(.*?)[\r\n]+```'
         matches = re.findall(pattern, text, re.DOTALL)
         
         if matches:
-            # Return the first (or largest) code block
-            return max(matches, key=len).strip()
+            # Return the largest code block (in case there are multiple)
+            code = max(matches, key=len).strip()
+            return code
+        
+        # Check if text starts with markdown fence without finding matches
+        if text.startswith('```'):
+            # Remove first line and last line manually
+            lines = text.split('\n')
+            if len(lines) > 2:
+                # Remove first line (```python or ```)
+                lines = lines[1:]
+                # Remove last line if it contains ```
+                if lines and '```' in lines[-1]:
+                    lines = lines[:-1]
+                return '\n'.join(lines).strip()
         
         # If no markdown blocks found, return as-is
-        return text.strip()
+        return text
 
 
-def create_generator(model: str = "gemini-2.5-flash", api_key: Optional[str] = None) -> LLMGenerator:
+def create_generator(model: str = "gemini-2.0-flash", api_key: Optional[str] = None) -> LLMGenerator:
     """
     Factory function to create an LLM generator.
     
     Args:
-        model: Model name (default: gemini-2.5-flash)
+        model: Model name (default: gemini-2.5-pro)
         api_key: Gemini API key
         
     Returns:

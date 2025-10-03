@@ -10,7 +10,7 @@ An AI agent that generates Python parsers for bank statement PDFs using LLM-driv
 
 ### 1. Clone Repository
 ```
-git clone <your-repo-url>
+git clone https://github.com/Bhanuteja005/ai-agent-AutoParser.git
 cd ai-agent-AutoParser
 ```
 

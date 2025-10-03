@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""
-Agent-as-Coder: Bank Statement Parser Generator
-
-This agent uses LLM-driven code generation to create parsers for bank statement PDFs.
-It follows a plan-code-test-fix loop with up to N attempts to generate working code.
-
-Usage:
-    python agent.py --target icici
-    python agent.py --target icici --attempts 3 --model gpt-4o-mini
-"""
 
 import argparse
 import os
@@ -41,16 +31,6 @@ AGENT_REPORTS_DIR = PROJECT_ROOT / "agent_reports"
 
 
 class ParserAgent:
-    """
-    Agent that generates bank statement parsers using LLM-driven code generation.
-    
-    The agent follows a plan-code-test-fix loop:
-    1. Planner: Analyze PDF/CSV and create extraction plan
-    2. Code Generator: Generate parser code based on plan
-    3. Sandbox Runner: Write code and run tests
-    4. Observer: Analyze test failures
-    5. Repeat up to max_attempts times
-    """
     
     def __init__(
         self,

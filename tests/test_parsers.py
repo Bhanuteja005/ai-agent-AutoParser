@@ -231,9 +231,14 @@ def test_parser_handles_missing_file():
     
     parse_func = parser_module.parse
     
-    # Try parsing a non-existent file
-    with pytest.raises(Exception):  # Should raise some exception
-        parse_func("nonexistent_file.pdf")
+    # Try parsing a non-existent file - should return empty DataFrame
+    result = parse_func("nonexistent_file.pdf")
+    
+    # Verify it returns an empty DataFrame with correct columns
+    assert isinstance(result, pd.DataFrame), "Should return a DataFrame"
+    assert len(result) == 0, "Should return empty DataFrame for missing file"
+    assert list(result.columns) == ['Date', 'Description', 'Debit Amt', 'Credit Amt', 'Balance'], \
+        "Empty DataFrame should have correct columns"
 
 
 # ==================== HELPER FOR CLI ====================
